@@ -15,5 +15,17 @@ class TestGrinInterpreterArithmetic(unittest.TestCase):
         interpreter.run()
         self.assertEqual(interpreter._vars["A"], 19)
 
+    def test_labels_are_skipped(self):
+        program_text = [
+            "START: LET A 5",
+            "NEXT: ADD A 3"
+        ]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["A"], 8)
+        self.assertEqual(interpreter._labels["START"], 0)
+        self.assertEqual(interpreter._labels["NEXT"], 1)
+
 if __name__ == "__main__":
     unittest.main()
