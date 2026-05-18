@@ -54,5 +54,30 @@ class TestGrinInterpreterArithmetic(unittest.TestCase):
         interpreter.run()
         self.assertEqual(interpreter._vars["A"], 22)
 
+    def test_if_statement_true_jumps(self):
+        program_text = [
+            "LET A 10",
+            "GOTO JUMP IF A >= 5",
+            "LET A 1",
+            "JUMP: PRINT A"
+        ]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["A"], 10)
+
+    def test_if_statement_false_falls_through(self):
+        program_text = [
+            "LET A 3",
+            "GOTO JUMP IF A > 5",
+            "LET A 1",
+            "END",
+            "JUMP: LET A 100"
+        ]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["A"], 1)
+
 if __name__ == "__main__":
     unittest.main()

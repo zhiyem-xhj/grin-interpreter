@@ -101,35 +101,53 @@ class GrinInterpreter:
 
             elif kind == grin.GrinTokenKind.GOTO:
                 target_token = tokens[start_idx + 1]
-                target_kind = target_token.kind()
 
-                if target_kind == grin.GrinTokenKind.IDENTIFIER:
-                    label_name = target_token.value()
-                    if label_name in self._labels:
-                        self._pc = self._labels[label_name]
-                        continue
-                    else:
-                        print(f"Runtime Error: Label '{label_name}' not found")
-                        break
+                # Check if there is an optional conditional 'IF' attached to this GOTO
+                # Syntax: GOTO target IF left op right
+                has_condition = False
+                if len(tokens) > start_idx + 2:
+                    if tokens[start_idx + 2].kind() == grin.GrinTokenKind.IF:
+                        has_condition = True
 
-                elif target_kind == grin.GrinTokenKind.LITERAL_INTEGER:
-                    offset = target_token.value()
-                    new_pc = self._pc + offset
+                condition_met = True
+                if has_condition:
+                    left_val = self.get_value(tokens[start_idx + 3])
+                    op_kind = tokens[start_idx + 4].kind()
+                    right_val = self.get_value(tokens[start_idx + 5])
 
-                    if 0 <= new_pc < len(self._lines):
-                        self._pc = new_pc
-                        continue
-                    else:
-                        print(f"Runtime Error: Jump target line {new_pc} out of bounds")
-                        break
+                    if op_kind == grin.GrinTokenKind.EQUAL:
+                        condition_met = (left_val == right_val)
+                    elif op_kind == grin.GrinTokenKind.NOT_EQUAL:
+                        condition_met = (left_val != right_val)
+                    elif op_kind == grin.GrinTokenKind.LESS_THAN:
+                        condition_met = (left_val < right_val)
+                    elif op_kind == grin.GrinTokenKind.LESS_THAN_OR_EQUAL:
+                        condition_met = (left_val <= right_val)
+                    elif op_kind == grin.GrinTokenKind.GREATER_THAN:
+                        condition_met = (left_val > right_val)
+                    elif op_kind == grin.GrinTokenKind.GREATER_THAN_OR_EQUAL:
+                        condition_met = (left_val >= right_val)
 
-                elif target_kind == grin.GrinTokenKind.LITERAL_STRING:
-                    label_name = target_token.value()
-                    if label_name in self._labels:
-                        self._pc = self._labels[label_name]
-                        continue
-                    else:
-                        print(f"Runtime Error: Label string '{label_name}' not found")
-                        break
-
-                self._pc += 1
+                if condition_met:
+                    target_kind = target_token.kind()
+                    if target_kind in (grin.GrinTokenKind.IDENTIFIER, grin.GrinTokenKind.LITERAL_STRING):
+                        label_name = target_token.value()
+                        if label_name in self._labels:
+                            self._pc = self._labels[label_name]
+                            continue
+                        else:
+                            print(f"Runtime Error: Label '{label_name}' not found")
+                            break
+                    elif target_kind == grin.GrinTokenKind.LITERAL_INTEGER:
+                        offset = target_token.value()
+                        new_pc = self._pc + offset
+                        if 0 <= new_pc < len(self._lines):
+                            self._pc = new_pc
+                            continue
+                        else:
+                            print(f"Runtime Error: Jump target line {new_pc} out of bounds")
+                            break
+                else:
+                    # If condition is false, fall through to the next statement
+                    self._pc += 1
+                    continue
