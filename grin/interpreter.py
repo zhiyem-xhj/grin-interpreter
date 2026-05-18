@@ -7,15 +7,13 @@ class GrinInterpreter:
         self._pc = 0
         self._vars = {}
         self._labels = {}
+        self._call_stack = []
 
-        # Pre-process lines to find and map labels
         self._find_labels()
 
     def _find_labels(self):
-        """Scans the program lines to map labels to their instruction indices."""
         for index, tokens in enumerate(self._lines):
             if len(tokens) >= 2:
-                # If a line starts with an IDENTIFIER followed by a COLON, it's a label
                 if (tokens[0].kind() == grin.GrinTokenKind.IDENTIFIER and
                         tokens[1].kind() == grin.GrinTokenKind.COLON):
                     label_name = tokens[0].value()
@@ -34,14 +32,12 @@ class GrinInterpreter:
                 self._pc += 1
                 continue
 
-            # Skip the label prefix if it exists to locate the actual statement keyword
             start_idx = 0
             if (len(tokens) >= 2 and
                     tokens[0].kind() == grin.GrinTokenKind.IDENTIFIER and
                     tokens[1].kind() == grin.GrinTokenKind.COLON):
                 start_idx = 2
 
-            # If there's no statement after the label, move on
             if start_idx >= len(tokens):
                 self._pc += 1
                 continue
@@ -148,6 +144,64 @@ class GrinInterpreter:
                             print(f"Runtime Error: Jump target line {new_pc} out of bounds")
                             break
                 else:
-                    # If condition is false, fall through to the next statement
                     self._pc += 1
                     continue
+            elif kind == grin.GrinTokenKind.GOSUB:
+                target_token = tokens[start_idx + 1]
+
+                has_condition = False
+                if len(tokens) > start_idx + 2:
+                    if tokens[start_idx + 2].kind() == grin.GrinTokenKind.IF:
+                        has_condition = True
+
+                condition_met = True
+                if has_condition:
+                    left_val = self.get_value(tokens[start_idx + 3])
+                    op_kind = tokens[start_idx + 4].kind()
+                    right_val = self.get_value(tokens[start_idx + 5])
+
+                    if op_kind == grin.GrinTokenKind.EQUAL:
+                        condition_met = (left_val == right_val)
+                    elif op_kind == grin.GrinTokenKind.NOT_EQUAL:
+                        condition_met = (left_val != right_val)
+                    elif op_kind == grin.GrinTokenKind.LESS_THAN:
+                        condition_met = (left_val < right_val)
+                    elif op_kind == grin.GrinTokenKind.LESS_THAN_OR_EQUAL:
+                        condition_met = (left_val <= right_val)
+                    elif op_kind == grin.GrinTokenKind.GREATER_THAN:
+                        condition_met = (left_val > right_val)
+                    elif op_kind == grin.GrinTokenKind.GREATER_THAN_OR_EQUAL:
+                        condition_met = (left_val >= right_val)
+
+                if condition_met:
+                    self._call_stack.append(self._pc + 1)
+
+                    target_kind = target_token.kind()
+                    if target_kind in (grin.GrinTokenKind.IDENTIFIER,
+                                       grin.GrinTokenKind.LITERAL_STRING):
+                        label_name = target_token.value()
+                        if label_name in self._labels:
+                            self._pc = self._labels[label_name]
+                            continue
+                        else:
+                            print(f"Runtime Error: Label '{label_name}' not found")
+                            break
+                    elif target_kind == grin.GrinTokenKind.LITERAL_INTEGER:
+                        offset = target_token.value()
+                        new_pc = self._pc + offset
+                        if 0 <= new_pc < len(self._lines):
+                            self._pc = new_pc
+                            continue
+                        else:
+                            print(f"Runtime Error: Jump target line {new_pc} out of bounds")
+                            break
+                else:
+                    self._pc += 1
+                    continue
+
+            elif kind == grin.GrinTokenKind.RETURN:
+                if not self._call_stack:
+                    print("Runtime Error: RETURN executed with an empty call stack")
+                    break
+                self._pc = self._call_stack.pop()
+                continue

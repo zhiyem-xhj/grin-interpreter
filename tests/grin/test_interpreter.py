@@ -79,5 +79,33 @@ class TestGrinInterpreterArithmetic(unittest.TestCase):
         interpreter.run()
         self.assertEqual(interpreter._vars["A"], 1)
 
+    def test_gosub_and_return(self):
+        program_text = [
+            "LET A 1",
+            "GOSUB SUBROUTINE",
+            "ADD A 2",
+            "END",
+            "SUBROUTINE: MULT A 10",
+            "RETURN"
+        ]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["A"], 12)
+
+    def test_conditional_gosub_skipped(self):
+        program_text = [
+            "LET A 1",
+            "GOSUB SUBROUTINE IF A > 5",
+            "ADD A 2",
+            "END",
+            "SUBROUTINE: MULT A 10",
+            "RETURN"
+        ]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["A"], 3)
+
 if __name__ == "__main__":
     unittest.main()
