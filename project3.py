@@ -25,8 +25,8 @@ def main() -> None:
 
     try:
         parsed_program = list(grin.parse(lines))
-
-        print(f"Successfully parsed {len(parsed_program)} lines of Grin code.")
+        interpreter = grin.GrinInterpreter(parsed_program)
+        interpreter.run()
 
     except grin.GrinParseError as e:
         print(e)
