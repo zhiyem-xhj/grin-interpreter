@@ -34,5 +34,41 @@ class GrinInterpreter:
                 print(self.get_value(val_token))
                 self._pc += 1
 
+            elif kind == grin.GrinTokenKind.ADD:
+                target_var = tokens[1].value()
+                current_val = self._vars.get(target_var, 0)
+                operand_val = self.get_value(tokens[2])
+                self._vars[target_var] = current_val + operand_val
+                self._pc += 1
+
+            elif kind == grin.GrinTokenKind.SUB:
+                target_var = tokens[1].value()
+                current_val = self._vars.get(target_var, 0)
+                operand_val = self.get_value(tokens[2])
+                self._vars[target_var] = current_val - operand_val
+                self._pc += 1
+
+            elif kind == grin.GrinTokenKind.MULT:
+                target_var = tokens[1].value()
+                current_val = self._vars.get(target_var, 0)
+                operand_val = self.get_value(tokens[2])
+                self._vars[target_var] = current_val * operand_val
+                self._pc += 1
+
+            elif kind == grin.GrinTokenKind.DIV:
+                target_var = tokens[1].value()
+                current_val = self._vars.get(target_var, 0)
+                operand_val = self.get_value(tokens[2])
+
+                if operand_val == 0:
+                    print("Runtime Error: Division by zero")
+                    break
+
+                if isinstance(current_val, int) and isinstance(operand_val, int):
+                    self._vars[target_var] = current_val // operand_val
+                else:
+                    self._vars[target_var] = current_val / operand_val
+                self._pc += 1
+
             else:
                 self._pc += 1
