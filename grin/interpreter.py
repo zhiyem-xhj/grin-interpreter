@@ -95,3 +95,41 @@ class GrinInterpreter:
                 else:
                     self._vars[target_var] = current_val / operand_val
                 self._pc += 1
+
+            elif kind == grin.GrinTokenKind.END:
+                break
+
+            elif kind == grin.GrinTokenKind.GOTO:
+                target_token = tokens[start_idx + 1]
+                target_kind = target_token.kind()
+
+                if target_kind == grin.GrinTokenKind.IDENTIFIER:
+                    label_name = target_token.value()
+                    if label_name in self._labels:
+                        self._pc = self._labels[label_name]
+                        continue
+                    else:
+                        print(f"Runtime Error: Label '{label_name}' not found")
+                        break
+
+                elif target_kind == grin.GrinTokenKind.LITERAL_INTEGER:
+                    offset = target_token.value()
+                    new_pc = self._pc + offset
+
+                    if 0 <= new_pc < len(self._lines):
+                        self._pc = new_pc
+                        continue
+                    else:
+                        print(f"Runtime Error: Jump target line {new_pc} out of bounds")
+                        break
+
+                elif target_kind == grin.GrinTokenKind.LITERAL_STRING:
+                    label_name = target_token.value()
+                    if label_name in self._labels:
+                        self._pc = self._labels[label_name]
+                        continue
+                    else:
+                        print(f"Runtime Error: Label string '{label_name}' not found")
+                        break
+
+                self._pc += 1
