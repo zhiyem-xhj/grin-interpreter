@@ -1,5 +1,7 @@
 import unittest
+from unittest.mock import patch
 import grin
+
 
 class TestGrinInterpreterArithmetic(unittest.TestCase):
     def test_math_operations(self):
@@ -106,6 +108,23 @@ class TestGrinInterpreterArithmetic(unittest.TestCase):
         interpreter = grin.GrinInterpreter(parsed)
         interpreter.run()
         self.assertEqual(interpreter._vars["A"], 3)
+
+    @patch('sys.stdin.readline', return_value="42\n")
+    def test_innum_integer(self, mock_readline):
+        program_text = ["INNUM X"]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["X"], 42)
+
+    @patch('sys.stdin.readline', return_value="Hello World\n")
+    def test_instr_string(self, mock_readline):
+        program_text = ["INSTR S"]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["S"], "Hello World")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,5 @@
 import grin
+import sys
 
 
 class GrinInterpreter:
@@ -98,8 +99,6 @@ class GrinInterpreter:
             elif kind == grin.GrinTokenKind.GOTO:
                 target_token = tokens[start_idx + 1]
 
-                # Check if there is an optional conditional 'IF' attached to this GOTO
-                # Syntax: GOTO target IF left op right
                 has_condition = False
                 if len(tokens) > start_idx + 2:
                     if tokens[start_idx + 2].kind() == grin.GrinTokenKind.IF:
@@ -146,6 +145,7 @@ class GrinInterpreter:
                 else:
                     self._pc += 1
                     continue
+
             elif kind == grin.GrinTokenKind.GOSUB:
                 target_token = tokens[start_idx + 1]
 
@@ -177,8 +177,7 @@ class GrinInterpreter:
                     self._call_stack.append(self._pc + 1)
 
                     target_kind = target_token.kind()
-                    if target_kind in (grin.GrinTokenKind.IDENTIFIER,
-                                       grin.GrinTokenKind.LITERAL_STRING):
+                    if target_kind in (grin.GrinTokenKind.IDENTIFIER, grin.GrinTokenKind.LITERAL_STRING):
                         label_name = target_token.value()
                         if label_name in self._labels:
                             self._pc = self._labels[label_name]
@@ -205,3 +204,22 @@ class GrinInterpreter:
                     break
                 self._pc = self._call_stack.pop()
                 continue
+
+            elif kind == grin.GrinTokenKind.INNUM:
+                target_var = tokens[start_idx + 1].value()
+                try:
+                    user_input = sys.stdin.readline().strip()
+                    if '.' in user_input:
+                        self._vars[target_var] = float(user_input)
+                    else:
+                        self._vars[target_var] = int(user_input)
+                except ValueError:
+                    print("Runtime Error: Invalid numeric input")
+                    break
+                self._pc += 1
+
+            elif kind == grin.GrinTokenKind.INSTR:
+                target_var = tokens[start_idx + 1].value()
+                user_input = sys.stdin.readline().rstrip('\r\n')
+                self._vars[target_var] = user_input
+                self._pc += 1
