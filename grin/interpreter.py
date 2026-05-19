@@ -125,17 +125,25 @@ class GrinInterpreter:
 
                 if condition_met:
                     target_kind = target_token.kind()
-                    if target_kind in (grin.GrinTokenKind.IDENTIFIER, grin.GrinTokenKind.LITERAL_STRING):
-                        label_name = target_token.value()
-                        if label_name in self._labels:
-                            self._pc = self._labels[label_name]
+                    target_raw_val = target_token.value()
+
+                    # First check if the identifier name matches a label directly
+                    if isinstance(target_raw_val, str) and target_raw_val in self._labels:
+                        self._pc = self._labels[target_raw_val]
+                        continue
+
+                    # Otherwise, evaluate dynamic variable lookups/integers
+                    target_val = self.get_value(target_token)
+
+                    if isinstance(target_val, str):
+                        if target_val in self._labels:
+                            self._pc = self._labels[target_val]
                             continue
                         else:
-                            print(f"Runtime Error: Label '{label_name}' not found")
+                            print(f"Runtime Error: Label '{target_val}' not found")
                             break
-                    elif target_kind == grin.GrinTokenKind.LITERAL_INTEGER:
-                        offset = target_token.value()
-                        new_pc = self._pc + offset
+                    elif isinstance(target_val, int):
+                        new_pc = self._pc + target_val
                         if 0 <= new_pc < len(self._lines):
                             self._pc = new_pc
                             continue
@@ -174,21 +182,28 @@ class GrinInterpreter:
                         condition_met = (left_val >= right_val)
 
                 if condition_met:
-                    self._call_stack.append(self._pc + 1)
-
                     target_kind = target_token.kind()
-                    if target_kind in (grin.GrinTokenKind.IDENTIFIER, grin.GrinTokenKind.LITERAL_STRING):
-                        label_name = target_token.value()
-                        if label_name in self._labels:
-                            self._pc = self._labels[label_name]
+                    target_raw_val = target_token.value()
+
+                    if isinstance(target_raw_val, str) and target_raw_val in self._labels:
+                        self._call_stack.append(self._pc + 1)
+                        self._pc = self._labels[target_raw_val]
+                        continue
+
+                    target_val = self.get_value(target_token)
+
+                    if isinstance(target_val, str):
+                        if target_val in self._labels:
+                            self._call_stack.append(self._pc + 1)
+                            self._pc = self._labels[target_val]
                             continue
                         else:
-                            print(f"Runtime Error: Label '{label_name}' not found")
+                            print(f"Runtime Error: Label '{target_val}' not found")
                             break
-                    elif target_kind == grin.GrinTokenKind.LITERAL_INTEGER:
-                        offset = target_token.value()
-                        new_pc = self._pc + offset
+                    elif isinstance(target_val, int):
+                        new_pc = self._pc + target_val
                         if 0 <= new_pc < len(self._lines):
+                            self._call_stack.append(self._pc + 1)
                             self._pc = new_pc
                             continue
                         else:

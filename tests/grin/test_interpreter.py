@@ -43,6 +43,18 @@ class TestGrinInterpreterArithmetic(unittest.TestCase):
         interpreter.run()
         self.assertEqual(interpreter._vars["A"], 6)
 
+    def test_goto_with_variable_lookup(self):
+        program_text = [
+            "START: LET A \"TARGET\"",
+            "GOTO A",
+            "EXTRA: END",
+            "TARGET: LET B 99"
+        ]
+        parsed = list(grin.parse(program_text))
+        interpreter = grin.GrinInterpreter(parsed)
+        interpreter.run()
+        self.assertEqual(interpreter._vars["B"], 99)
+
     def test_goto_with_relative_integer(self):
         program_text = [
             "LET A 2",
