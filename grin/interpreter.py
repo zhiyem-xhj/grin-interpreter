@@ -87,7 +87,8 @@ class GrinInterpreter:
                     print("Runtime Error: Division by zero")
                     break
 
-                if isinstance(current_val, int) and isinstance(operand_val, int):
+                if (isinstance(current_val, int)
+                        and isinstance(operand_val, int)):
                     self._vars[target_var] = current_val // operand_val
                 else:
                     self._vars[target_var] = current_val / operand_val
@@ -127,12 +128,11 @@ class GrinInterpreter:
                     target_kind = target_token.kind()
                     target_raw_val = target_token.value()
 
-                    # First check if the identifier name matches a label directly
-                    if isinstance(target_raw_val, str) and target_raw_val in self._labels:
+                    if (isinstance(target_raw_val, str)
+                            and target_raw_val in self._labels):
                         self._pc = self._labels[target_raw_val]
                         continue
 
-                    # Otherwise, evaluate dynamic variable lookups/integers
                     target_val = self.get_value(target_token)
 
                     if isinstance(target_val, str):
@@ -140,7 +140,8 @@ class GrinInterpreter:
                             self._pc = self._labels[target_val]
                             continue
                         else:
-                            print(f"Runtime Error: Label '{target_val}' not found")
+                            print(f"Runtime Error: Label "
+                                  f"'{target_val}' not found")
                             break
                     elif isinstance(target_val, int):
                         new_pc = self._pc + target_val
@@ -148,7 +149,8 @@ class GrinInterpreter:
                             self._pc = new_pc
                             continue
                         else:
-                            print(f"Runtime Error: Jump target line {new_pc} out of bounds")
+                            print(f"Runtime Error: Jump target"
+                                  f" line {new_pc} out of bounds")
                             break
                 else:
                     self._pc += 1
@@ -185,7 +187,8 @@ class GrinInterpreter:
                     target_kind = target_token.kind()
                     target_raw_val = target_token.value()
 
-                    if isinstance(target_raw_val, str) and target_raw_val in self._labels:
+                    if (isinstance(target_raw_val, str)
+                            and target_raw_val in self._labels):
                         self._call_stack.append(self._pc + 1)
                         self._pc = self._labels[target_raw_val]
                         continue
@@ -198,7 +201,8 @@ class GrinInterpreter:
                             self._pc = self._labels[target_val]
                             continue
                         else:
-                            print(f"Runtime Error: Label '{target_val}' not found")
+                            print(f"Runtime Error: Label"
+                                  f" '{target_val}' not found")
                             break
                     elif isinstance(target_val, int):
                         new_pc = self._pc + target_val
@@ -207,7 +211,8 @@ class GrinInterpreter:
                             self._pc = new_pc
                             continue
                         else:
-                            print(f"Runtime Error: Jump target line {new_pc} out of bounds")
+                            print(f"Runtime Error: Jump target"
+                                  f" line {new_pc} out of bounds")
                             break
                 else:
                     self._pc += 1
@@ -215,7 +220,8 @@ class GrinInterpreter:
 
             elif kind == grin.GrinTokenKind.RETURN:
                 if not self._call_stack:
-                    print("Runtime Error: RETURN executed with an empty call stack")
+                    print("Runtime Error: RETURN executed"
+                          " with an empty call stack")
                     break
                 self._pc = self._call_stack.pop()
                 continue
